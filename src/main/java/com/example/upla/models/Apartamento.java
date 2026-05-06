@@ -1,21 +1,17 @@
 package com.example.upla.models;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.List;
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Builder
-@Table (name = "apartamento")
+@Table(name = "apartamento")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Apartamento {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_ap;
@@ -26,12 +22,13 @@ public class Apartamento {
     @Column(nullable = false)
     private Long CIF;
 
-    @ManyToMany(mappedBy = "apartments") // Points to the field name in Administrator class
-    private List<Administrador> administrators;
+    @ManyToMany(mappedBy = "apartments")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Administrador> administrators = new HashSet<>();
 
-    @OneToMany(mappedBy = "apartament")
-    private List<Reserva> reservas;
-
-
-
+    @OneToMany(mappedBy = "apartment")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Reserva> reservas = new HashSet<>();
 }
