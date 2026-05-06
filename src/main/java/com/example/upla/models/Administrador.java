@@ -44,6 +44,12 @@ public class Administrador {
             joinColumns = @JoinColumn(name = "id_ad"),
             inverseJoinColumns = @JoinColumn(name = "id_ap")
     )
+
     
     private List<Apartamento> apartments;
+
+    public void addApartaments(Apartamento apartamento){
+        apartments.add(apartamento);
+        apartamento.getAdministrators().add(this);
+    }
 }

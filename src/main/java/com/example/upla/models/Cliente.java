@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import org.hibernate.annotations.ValueGenerationType;
 
+import java.util.List;
+
 @Entity
 @Builder
 @Table (name = "cliente")
@@ -24,5 +26,6 @@ public class Cliente {
     @Column (nullable = false)
     private String nombre;
 
-
+    @OneToMany(mappedBy = "cliente")
+    private List<Reserva> reservas;
 }

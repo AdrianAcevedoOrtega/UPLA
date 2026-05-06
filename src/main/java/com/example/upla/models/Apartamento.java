@@ -28,4 +28,10 @@ public class Apartamento {
 
     @ManyToMany(mappedBy = "apartments") // Points to the field name in Administrator class
     private List<Administrador> administrators;
+
+    @OneToMany(mappedBy = "apartament")
+    private List<Reserva> reservas;
+
+
+
 }
