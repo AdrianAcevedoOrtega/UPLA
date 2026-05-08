@@ -11,10 +11,7 @@ import com.example.upla.repositories.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +21,7 @@ public class ReservaService {
     private final ClienteRepository clienteRepository;
     private final ApartamentoRepository apartamentoRepository;
 
-    // Métodos
+
     public ReservaResponseDTO crearReserva(ReservaRequestDTO reservaDTO) {
 
         Cliente clienteEncontrado = clienteRepository.findById(reservaDTO.getId_cliente())
@@ -56,24 +53,5 @@ public class ReservaService {
                 .nombreCliente(reservaGuardada.getCliente().getNombre()) // Sacamos el nombre del objeto Cliente
                 .direccionApartamento(reservaGuardada.getApartmento().getDireccion()) // Sacamos la dirección del objeto Apartamento
                 .build();
-    }
-
-    public List<ReservaResponseDTO> obtenerTodasLasReservas(){
-        List<ReservaResponseDTO> reservas = new ArrayList<>();
-        List<Reserva> reservasEnBaseDeDatos = reservaRepository.findAll();;
-        for (Reserva reserva: reservasEnBaseDeDatos){
-            ReservaResponseDTO dato = ReservaResponseDTO.builder()
-                    .id_reserva(reserva.getId_reserva())
-                    .f_entrada(reserva.getF_entrada())
-                    .f_salida(reserva.getF_salida())
-                    .nombreCliente(reserva.getCliente().getNombre()) // Sacamos el nombre del objeto Cliente
-                    .direccionApartamento(reserva.getApartmento().getDireccion()) // Sacamos la dirección del objeto Apartamento
-                    .build();
-
-            reservas.add(dato);
-        }
-
-        return reservas;
-
     }
 }
