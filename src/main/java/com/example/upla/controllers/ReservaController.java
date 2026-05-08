@@ -7,10 +7,9 @@ import com.example.upla.datos.ReservaResponseDTO;
 import com.example.upla.models.Reserva;
 import com.example.upla.services.ReservaService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/reservas")
@@ -21,6 +20,11 @@ public class ReservaController {
     @PostMapping
     public ReservaResponseDTO crear(@RequestBody ReservaRequestDTO reservaDTO) {
         return reservaService.crearReserva(reservaDTO);
+    }
+
+    @GetMapping
+    public List<ReservaResponseDTO> listar() {
+        return reservaService.obtenerTodasLasReservas();
     }
 
 }
