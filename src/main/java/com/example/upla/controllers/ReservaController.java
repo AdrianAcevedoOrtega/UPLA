@@ -27,4 +27,10 @@ public class ReservaController {
         return reservaService.obtenerTodasLasReservas();
     }
 
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        reservaService.eliminarReserva(id);
+    }
+
+
 }

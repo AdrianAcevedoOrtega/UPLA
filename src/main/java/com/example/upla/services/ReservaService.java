@@ -76,4 +76,12 @@ public class ReservaService {
         return reservas;
 
     }
+
+    public void eliminarReserva(Long id){
+        if (!reservaRepository.existsById(id)) {
+            throw new RuntimeException("Error: La reserva con ID " + id + " no existe.");
+        }
+        reservaRepository.deleteById(id);
+
+    }
 }
