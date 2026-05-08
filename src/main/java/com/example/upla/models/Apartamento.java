@@ -27,7 +27,7 @@ public class Apartamento {
     @EqualsAndHashCode.Exclude
     private Set<Administrador> administrators = new HashSet<>();
 
-    @OneToMany(mappedBy = "apartment")
+    @OneToMany(mappedBy = "apartmento")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Reserva> reservas = new HashSet<>();
