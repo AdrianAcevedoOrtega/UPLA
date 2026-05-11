@@ -31,4 +31,12 @@ public class Apartamento {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Reserva> reservas = new HashSet<>();
+
+
+    public void addAdministrador(Administrador administrador) {
+        this.administrators.add(administrador);
+        administrador.getApartments().add(this);
+    }
+
+
 }

@@ -16,7 +16,7 @@ import java.util.Date;
 public class ReservaResponseDTO {
 
     // Atributos
-    private Long id_reserva;
+    private String id_reserva;
     private String nombreCliente;
     private Date f_entrada;
     private Date f_salida;

@@ -34,6 +34,9 @@ public class Administrador {
             joinColumns = @JoinColumn(name = "id_ad"),
             inverseJoinColumns = @JoinColumn(name = "id_ap")
     )
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Apartamento> apartments = new HashSet<>();
 
     public void addApartamento(Apartamento apartamento) {

@@ -11,6 +11,8 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservaRequestDTO {
+
+    private String id_reserva;
     private Date f_entrada;
     private Date f_salida;
     private Long id_cliente;

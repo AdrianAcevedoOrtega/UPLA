@@ -11,8 +11,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class Reserva {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id_reserva;
+    private String id_reserva;
 
     @Column(nullable = false)
     private Date f_entrada;

@@ -28,12 +28,12 @@ public class ReservaController {
     }
 
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
+    public void eliminar(@PathVariable String id) {
         reservaService.eliminarReserva(id);
     }
 
     @PutMapping("/{id}")
-    public ReservaResponseDTO actualizar(@PathVariable Long id, @RequestBody ReservaRequestDTO nuevosDatos){
+    public ReservaResponseDTO actualizar(@PathVariable String id, @RequestBody ReservaRequestDTO nuevosDatos){
         return reservaService.actualizarReserva(id, nuevosDatos);
     }
 }

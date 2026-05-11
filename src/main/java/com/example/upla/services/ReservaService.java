@@ -9,6 +9,7 @@ import com.example.upla.repositories.ApartamentoRepository;
 import com.example.upla.repositories.ClienteRepository;
 import com.example.upla.repositories.ReservaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public class ReservaService {
 
     }
 
-    public void eliminarReserva(Long id){
+    public void eliminarReserva(String id){
         if (!reservaRepository.existsById(id)) {
             throw new RuntimeException("Error: La reserva con ID " + id + " no existe.");
         }
@@ -85,7 +86,7 @@ public class ReservaService {
 
     }
 
-    public ReservaResponseDTO actualizarReserva(Long id, ReservaRequestDTO nuevosDatos) {
+    public ReservaResponseDTO actualizarReserva(String id, ReservaRequestDTO nuevosDatos) {
         Reserva reservaAntigua = reservaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Error: La reserva con ID " + id + " no existe."));
 
@@ -116,5 +117,28 @@ public class ReservaService {
                 .direccionApartamento(reservaGuardada.getApartmento().getDireccion())
                 .build();
 
+    }
+
+    @Scheduled (fixedRate = 60000)
+    public void eliminarReservasSolapadas() {
+        List<Reserva> todasReservas = new ArrayList<>(reservaRepository.findAll());
+
+        for (int i = 0; i < todasReservas.size(); i++){
+            Reserva reservaA = todasReservas.get(i);
+            for (int j = i + 1; j < todasReservas.size(); j++) {
+                Reserva reservaB = todasReservas.get(j);
+
+                if (reservaA.getApartmento().getId_ap().equals(reservaB.getApartmento().getId_ap())){
+                    if (reservaB.getF_entrada().before(reservaA.getF_salida()) &&
+                            reservaB.getF_salida().after(reservaA.getF_entrada())) {
+                        if (reservaA.getId_reserva().compareTo(reservaB.getId_reserva()) > 0) {
+                            reservaRepository.deleteById(reservaA.getId_reserva());
+                        } else {
+                            reservaRepository.deleteById(reservaB.getId_reserva());
+                        }
+                    }
+                }
+            }
+        }
     }
 }
