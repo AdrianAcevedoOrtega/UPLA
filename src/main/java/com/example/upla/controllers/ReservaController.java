@@ -19,7 +19,6 @@ public class ReservaController {
 
     @PostMapping
     // Este método que recibe los post, es decir, las creaciones, se encarga de crear una nueva reserva. Recibe un objeto de tipo ReservaRequestDTO que contiene los datos necesarios para crear la reserva, como las fechas de entrada y salida, el ID del cliente y el ID del apartamento. El método valida los datos recibidos utilizando la anotación @Valid y luego llama al servicio de reservas para crear la nueva reserva. Finalmente, devuelve un objeto de tipo ReservaResponseDTO que contiene los detalles de la reserva creada.
-
     public ReservaResponseDTO crear(@Valid @RequestBody ReservaRequestDTO reservaDTO) {
         return reservaService.crearReserva(reservaDTO);
     }
