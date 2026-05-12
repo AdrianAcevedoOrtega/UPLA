@@ -36,6 +36,7 @@ public class ReservaController {
     }
 
     @DeleteMapping("/{id}")
+    // Eliminar una reserva por su id
     public void eliminar(@PathVariable String id) {
         reservaService.eliminarReserva(id);
     }
