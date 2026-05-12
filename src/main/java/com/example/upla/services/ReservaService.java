@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +51,7 @@ public class ReservaService {
                 .f_entrada(entrada)
                 .f_salida(salida)
                 .cliente(clienteEncontrado)
-                .apartmento(apartamentoEncontrado)
+                .apartamento(apartamentoEncontrado)
                 .build();
 
         Reserva reservaGuardada = reservaRepository.save(nuevaReserva);
@@ -62,7 +61,7 @@ public class ReservaService {
                 .f_entrada(reservaGuardada.getF_entrada())
                 .f_salida(reservaGuardada.getF_salida())
                 .nombreCliente(reservaGuardada.getCliente().getNombre()) // Sacamos el nombre del objeto Cliente
-                .direccionApartamento(reservaGuardada.getApartmento().getDireccion()) // Sacamos la dirección del objeto Apartamento
+                .direccionApartamento(reservaGuardada.getApartamento().getDireccion()) // Sacamos la dirección del objeto Apartamento
                 .build();
     }
 
@@ -76,7 +75,7 @@ public class ReservaService {
                 .f_entrada(reserva.getF_entrada())
                 .f_salida(reserva.getF_salida())
                 .nombreCliente(reserva.getCliente().getNombre())
-                .direccionApartamento(reserva.getApartmento().getDireccion())
+                .direccionApartamento(reserva.getApartamento().getDireccion())
                 .build());
     }
 
@@ -107,7 +106,7 @@ public class ReservaService {
         reservaAntigua.setF_entrada(entrada);
         reservaAntigua.setF_salida(salida);
         reservaAntigua.setCliente(nuevoClienteEncontrado);
-        reservaAntigua.setApartmento(nuevoApartamentoEncontrado);
+        reservaAntigua.setApartamento(nuevoApartamentoEncontrado);
 
         Reserva reservaGuardada = reservaRepository.save(reservaAntigua);
 
@@ -116,7 +115,7 @@ public class ReservaService {
                 .f_entrada(reservaGuardada.getF_entrada())
                 .f_salida(reservaGuardada.getF_salida())
                 .nombreCliente(reservaGuardada.getCliente().getNombre())
-                .direccionApartamento(reservaGuardada.getApartmento().getDireccion())
+                .direccionApartamento(reservaGuardada.getApartamento().getDireccion())
                 .build();
 
     }
@@ -130,7 +129,7 @@ public class ReservaService {
             for (int j = i + 1; j < todasReservas.size(); j++) {
                 Reserva reservaB = todasReservas.get(j);
 
-                if (reservaA.getApartmento().getId_ap().equals(reservaB.getApartmento().getId_ap())){
+                if (reservaA.getApartamento().getId_ap().equals(reservaB.getApartamento().getId_ap())){
                     if (reservaB.getF_entrada().before(reservaA.getF_salida()) &&
                             reservaB.getF_salida().after(reservaA.getF_entrada())) {
                         if (reservaA.getId_reserva().compareTo(reservaB.getId_reserva()) > 0) {

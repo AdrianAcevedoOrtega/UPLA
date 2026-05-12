@@ -4,27 +4,31 @@ package com.example.upla.controllers;
 
 import com.example.upla.datos.ReservaRequestDTO;
 import com.example.upla.datos.ReservaResponseDTO;
-import com.example.upla.models.Reserva;
 import com.example.upla.services.ReservaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("api/reservas")
 @RequiredArgsConstructor
+
 public class ReservaController {
     private final ReservaService reservaService;
 
     @PostMapping
-    // Este metodo recibe los post, es decir, las creaciones
+    // Este método que recibe los post, es decir, las creaciones, se encarga de crear una nueva reserva. Recibe un objeto de tipo ReservaRequestDTO que contiene los datos necesarios para crear la reserva, como las fechas de entrada y salida, el ID del cliente y el ID del apartamento. El método valida los datos recibidos utilizando la anotación @Valid y luego llama al servicio de reservas para crear la nueva reserva. Finalmente, devuelve un objeto de tipo ReservaResponseDTO que contiene los detalles de la reserva creada.
+
     public ReservaResponseDTO crear(@Valid @RequestBody ReservaRequestDTO reservaDTO) {
         return reservaService.crearReserva(reservaDTO);
     }
 
+    /**
+     * Pagina todas las reservas.
+     * La primera página empieza por 0.
+     * La última página empieza por 10.
+     */
     @GetMapping
     public Page<ReservaResponseDTO> listar(
             @RequestParam(defaultValue = "0") int page, // Por defecto ponemos que la primera página sea la 0

@@ -22,12 +22,15 @@ public class Apartamento {
     @Column(nullable = false)
     private Long CIF;
 
+    @Column
+    private Double precio;
+
     @ManyToMany(mappedBy = "apartments")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Administrador> administrators = new HashSet<>();
 
-    @OneToMany(mappedBy = "apartmento")
+    @OneToMany(mappedBy = "apartamento")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Reserva> reservas = new HashSet<>();
