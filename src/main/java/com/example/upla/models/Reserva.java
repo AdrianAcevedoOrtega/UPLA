@@ -19,6 +19,9 @@ public class Reserva {
     @Column(nullable = false)
     private Date f_salida;
 
+    @Column(nullable = false)
+    private Double precio;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ap")
     private Apartamento apartamento;

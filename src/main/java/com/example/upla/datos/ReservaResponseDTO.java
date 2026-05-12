@@ -1,6 +1,5 @@
 package com.example.upla.datos;
 
-import com.example.upla.repositories.ClienteRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +20,7 @@ public class ReservaResponseDTO {
     private Date f_entrada;
     private Date f_salida;
     private String direccionApartamento;
+    private Double precio;
 
 
 }

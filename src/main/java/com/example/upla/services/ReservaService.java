@@ -28,6 +28,41 @@ public class ReservaService {
     private final ApartamentoRepository apartamentoRepository;
 
     // Métodos
+    /**
+     * Calcula el precio total de la reserva basado en el número de noches,
+     * precio por noche del apartamento, y descuentos disponibles.
+     * Si la reserva es de una sola noche, se añade un 50% de recargo.
+     *
+     * Los descuentos se aplican por prioridad (no se acumulan):
+     * 1. Cliente registrado: 10% descuento
+     * 2. Reserva de 7+ noches: 10% descuento
+     * 3. Sin descuento
+     */
+    private Double calcularPrecioReserva(Date f_entrada, Date f_salida, Double precioPorNoche, Boolean clienteRegistrado) {
+        long diferencia = f_salida.getTime() - f_entrada.getTime();
+        // milisegundos * segundos * minutos * horas
+        // con esto podemos calcular el número de días
+        long numeroNoches = diferencia / (1000 * 60 * 60 * 24);
+
+        Double precioTotal = numeroNoches * precioPorNoche;
+
+        // Si es una sola noche, aplicar 50% de recargo
+        if (numeroNoches == 1) {
+            precioTotal = precioTotal * 1.5;
+        }
+
+        // Aplicar descuentos por prioridad (NO se acumulan)
+        if (clienteRegistrado != null && clienteRegistrado) {
+            // Cliente registrado: 10% descuento
+            precioTotal = precioTotal * 0.9;
+        } else if (numeroNoches >= 7) {
+            // Reserva de 7+ noches: 10% descuento (solo si no es cliente registrado)
+            precioTotal = precioTotal * 0.9;
+        }
+
+        return precioTotal;
+    }
+
     public ReservaResponseDTO crearReserva(ReservaRequestDTO reservaDTO) {
 
         Cliente clienteEncontrado = clienteRepository.findById(reservaDTO.getId_cliente())
@@ -47,11 +82,14 @@ public class ReservaService {
             throw new IllegalArgumentException("Error: El apartamento ya está reservado para las fechas seleccionadas.");
         }
 
+        Double precioReserva = calcularPrecioReserva(entrada, salida, apartamentoEncontrado.getPrecio(), clienteEncontrado.getRegistrado());
+
         Reserva nuevaReserva = Reserva.builder()
                 .f_entrada(entrada)
                 .f_salida(salida)
                 .cliente(clienteEncontrado)
                 .apartamento(apartamentoEncontrado)
+                .precio(precioReserva)
                 .build();
 
         Reserva reservaGuardada = reservaRepository.save(nuevaReserva);
@@ -60,8 +98,9 @@ public class ReservaService {
                 .id_reserva(reservaGuardada.getId_reserva())
                 .f_entrada(reservaGuardada.getF_entrada())
                 .f_salida(reservaGuardada.getF_salida())
-                .nombreCliente(reservaGuardada.getCliente().getNombre()) // Sacamos el nombre del objeto Cliente
-                .direccionApartamento(reservaGuardada.getApartamento().getDireccion()) // Sacamos la dirección del objeto Apartamento
+                .nombreCliente(reservaGuardada.getCliente().getNombre())
+                .direccionApartamento(reservaGuardada.getApartamento().getDireccion())
+                .precio(reservaGuardada.getPrecio())
                 .build();
     }
 
@@ -76,6 +115,7 @@ public class ReservaService {
                 .f_salida(reserva.getF_salida())
                 .nombreCliente(reserva.getCliente().getNombre())
                 .direccionApartamento(reserva.getApartamento().getDireccion())
+                .precio(reserva.getPrecio())
                 .build());
     }
 
@@ -108,6 +148,10 @@ public class ReservaService {
         reservaAntigua.setCliente(nuevoClienteEncontrado);
         reservaAntigua.setApartamento(nuevoApartamentoEncontrado);
 
+        // Recalcular el precio de la reserva
+        Double precioReserva = calcularPrecioReserva(entrada, salida, nuevoApartamentoEncontrado.getPrecio(), nuevoClienteEncontrado.getRegistrado());
+        reservaAntigua.setPrecio(precioReserva);
+
         Reserva reservaGuardada = reservaRepository.save(reservaAntigua);
 
         return ReservaResponseDTO.builder()
@@ -116,6 +160,7 @@ public class ReservaService {
                 .f_salida(reservaGuardada.getF_salida())
                 .nombreCliente(reservaGuardada.getCliente().getNombre())
                 .direccionApartamento(reservaGuardada.getApartamento().getDireccion())
+                .precio(reservaGuardada.getPrecio())
                 .build();
 
     }

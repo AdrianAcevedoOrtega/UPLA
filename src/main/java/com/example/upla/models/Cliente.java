@@ -19,6 +19,9 @@ public class Cliente {
     @Column(nullable = false)
     private String nombre;
 
+    @Column(nullable = false)
+    private Boolean registrado = false;
+
     @OneToMany(mappedBy = "cliente")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
