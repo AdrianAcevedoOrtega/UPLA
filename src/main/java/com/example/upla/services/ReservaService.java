@@ -9,6 +9,9 @@ import com.example.upla.repositories.ApartamentoRepository;
 import com.example.upla.repositories.ClienteRepository;
 import com.example.upla.repositories.ReservaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +44,10 @@ public class ReservaService {
             throw new IllegalArgumentException("La fecha de salida debe ser posterior a la fecha de entrada.");
         }
 
+        if (reservaRepository.existeSolapamiento(reservaDTO.getId_apartamento(), entrada, salida)) {
+            throw new IllegalArgumentException("Error: El apartamento ya está reservado para las fechas seleccionadas.");
+        }
+
         Reserva nuevaReserva = Reserva.builder()
                 .f_entrada(entrada)
                 .f_salida(salida)
@@ -59,23 +66,18 @@ public class ReservaService {
                 .build();
     }
 
-    public List<ReservaResponseDTO> obtenerTodasLasReservas(){
-        List<ReservaResponseDTO> reservas = new ArrayList<>();
-        List<Reserva> reservasEnBaseDeDatos = reservaRepository.findAll();;
-        for (Reserva reserva: reservasEnBaseDeDatos){
-            ReservaResponseDTO dato = ReservaResponseDTO.builder()
-                    .id_reserva(reserva.getId_reserva())
-                    .f_entrada(reserva.getF_entrada())
-                    .f_salida(reserva.getF_salida())
-                    .nombreCliente(reserva.getCliente().getNombre()) // Sacamos el nombre del objeto Cliente
-                    .direccionApartamento(reserva.getApartmento().getDireccion()) // Sacamos la dirección del objeto Apartamento
-                    .build();
+    public Page<ReservaResponseDTO> obtenerTodasLasReservas(int page, int size){
+        Pageable configuracionPagina = PageRequest.of(page, size);
 
-            reservas.add(dato);
-        }
+        Page<Reserva> paginaDeReservas = reservaRepository.findAll(configuracionPagina);
 
-        return reservas;
-
+        return paginaDeReservas.map(reserva -> ReservaResponseDTO.builder()
+                .id_reserva(reserva.getId_reserva())
+                .f_entrada(reserva.getF_entrada())
+                .f_salida(reserva.getF_salida())
+                .nombreCliente(reserva.getCliente().getNombre())
+                .direccionApartamento(reserva.getApartmento().getDireccion())
+                .build());
     }
 
     public void eliminarReserva(String id){
