@@ -1,29 +1,48 @@
 package com.example.upla.models;
+
+import com.example.upla.models.enums.ReservaStatus;
 import jakarta.persistence.*;
-import lombok.*;
-import java.util.Date;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
-@Builder
-@Table(name = "reserva")
+@Table(name = "reservas")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Reserva {
+
     @Id
-    private String id_reserva;
+    private String id;
 
     @Column(nullable = false)
-    private Date f_entrada;
+    private String clienteNombre;
 
     @Column(nullable = false)
-    private Date f_salida;
+    private String habitacionTipo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_ap")
-    private Apartamento apartamento;
+    @Column(nullable = false)
+    private LocalDateTime fechaEntrada;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_cliente")
-    private Cliente cliente;
+    @Column(nullable = false)
+    private LocalDateTime fechaSalida;
+
+    @Enumerated(EnumType.STRING)
+    private ReservaStatus status;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString().substring(0, 8);
+        }
+        this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = ReservaStatus.PENDING;
+        }
+    }
 }

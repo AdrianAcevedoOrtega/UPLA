@@ -1,26 +1,21 @@
 package com.example.upla.datos;
 
-import com.example.upla.repositories.ClienteRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
 public class ReservaResponseDTO {
 
-    // Atributos
     private String id_reserva;
     private String nombreCliente;
-    private Date f_entrada;
-    private Date f_salida;
+    private LocalDateTime f_entrada;
+    private LocalDateTime f_salida;
     private String direccionApartamento;
-
-
 }
