@@ -1,5 +1,5 @@
 // Configuración de la API
-const API_BASE_URL = window.location.origin;
+const API_BASE_URL = 'http://localhost:8080';
 
 // Elementos del DOM
 const reservaForm = document.getElementById('reservaForm');
@@ -38,11 +38,15 @@ function showMessage(message, type = 'success') {
 async function crearReserva() {
     const formData = new FormData(reservaForm);
     const reservaData = {
+        dni: formData.get('dni'),
         id_cliente: parseInt(formData.get('id_cliente')),
         id_apartamento: parseInt(formData.get('id_apartamento')),
         f_entrada: new Date(formData.get('f_entrada')).toISOString(),
         f_salida: new Date(formData.get('f_salida')).toISOString()
     };
+
+    // Debug: mostrar los datos que se van a enviar
+    console.log('Datos a enviar:', reservaData);
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/reservas`, {
@@ -59,8 +63,15 @@ async function crearReserva() {
             reservaForm.reset();
             loadReservas(); // Recargar la lista
         } else {
-            const error = await response.json();
-            showMessage(`❌ Error: ${error.message || 'Error al crear la reserva'}`, 'error');
+            // Debug: mostrar el error detallado
+            const errorText = await response.text();
+            console.error('Error response:', response.status, errorText);
+            try {
+                const error = JSON.parse(errorText);
+                showMessage(`❌ Error: ${error.message || 'Error al crear la reserva'}`, 'error');
+            } catch (e) {
+                showMessage(`❌ Error ${response.status}: ${errorText}`, 'error');
+            }
         }
     } catch (error) {
         console.error('Error:', error);

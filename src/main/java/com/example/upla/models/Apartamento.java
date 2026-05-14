@@ -20,7 +20,8 @@ public class Apartamento {
     private String direccion;
 
     @Column(nullable = false)
-    private Long CIF;
+    // CIF ahora es un varchar en la base de datos
+    private String CIF;
 
     @Column
     private Double precio;

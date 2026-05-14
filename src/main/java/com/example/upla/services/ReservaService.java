@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.text.SimpleDateFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -28,45 +29,16 @@ public class ReservaService {
     private final ApartamentoRepository apartamentoRepository;
 
     // Métodos
-    /**
-     * Calcula el precio total de la reserva basado en el número de noches,
-     * precio por noche del apartamento, y descuentos disponibles.
-     * Si la reserva es de una sola noche, se añade un 50% de recargo.
-     *
-     * Los descuentos se aplican por prioridad (no se acumulan):
-     * 1. Cliente registrado: 10% descuento
-     * 2. Reserva de 7+ noches: 10% descuento
-     * 3. Sin descuento
-     */
-    private Double calcularPrecioReserva(Date f_entrada, Date f_salida, Double precioPorNoche, Boolean clienteRegistrado) {
-        long diferencia = f_salida.getTime() - f_entrada.getTime();
-        // milisegundos * segundos * minutos * horas
-        // con esto podemos calcular el número de días
-        long numeroNoches = diferencia / (1000 * 60 * 60 * 24);
-
-        Double precioTotal = numeroNoches * precioPorNoche;
-
-        // Si es una sola noche, aplicar 50% de recargo
-        if (numeroNoches == 1) {
-            precioTotal = precioTotal * 1.5;
-        }
-
-        // Aplicar descuentos por prioridad (NO se acumulan)
-        if (clienteRegistrado != null && clienteRegistrado) {
-            // Cliente registrado: 10% descuento
-            precioTotal = precioTotal * 0.9;
-        } else if (numeroNoches >= 7) {
-            // Reserva de 7+ noches: 10% descuento (solo si no es cliente registrado)
-            precioTotal = precioTotal * 0.9;
-        }
-
-        return precioTotal;
-    }
 
     public ReservaResponseDTO crearReserva(ReservaRequestDTO reservaDTO) {
 
         Cliente clienteEncontrado = clienteRepository.findById(reservaDTO.getId_cliente())
                 .orElseThrow(() -> new RuntimeException("Error: El cliente con ID " + reservaDTO.getId_cliente() + " no existe."));
+
+        // Validar que el DNI coincida con el del cliente
+        if (!clienteEncontrado.getDni().equals(reservaDTO.getDni())) {
+            throw new IllegalArgumentException("Error: El DNI proporcionado no coincide con el del cliente registrado.");
+        }
 
         Apartamento apartamentoEncontrado = apartamentoRepository.findById(reservaDTO.getId_apartamento())
                 .orElseThrow(() -> new RuntimeException("Error: El apartamento con ID " + reservaDTO.getId_apartamento() + " no existe."));
@@ -84,7 +56,21 @@ public class ReservaService {
 
         Double precioReserva = calcularPrecioReserva(entrada, salida, apartamentoEncontrado.getPrecio(), clienteEncontrado.getRegistrado());
 
+        // Generar ID de reserva: "yyyy-MM-dd-idDepartamento" (usando fecha de entrada)
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String fechaEntradaFormato = sdf.format(entrada);
+        String idReservaBase = fechaEntradaFormato + "-" + String.format("%02d", reservaDTO.getId_apartamento());
+
+        // Verificar si el ID ya existe y agregar sufijo si es necesario
+        String idReserva = idReservaBase;
+        int contador = 1;
+        while (reservaRepository.existsById(idReserva)) {
+            idReserva = idReservaBase + "-" + contador;
+            contador++;
+        }
+
         Reserva nuevaReserva = Reserva.builder()
+                .id_reserva(idReserva)
                 .f_entrada(entrada)
                 .f_salida(salida)
                 .cliente(clienteEncontrado)
@@ -133,6 +119,11 @@ public class ReservaService {
 
         Cliente nuevoClienteEncontrado = clienteRepository.findById(nuevosDatos.getId_cliente())
                 .orElseThrow(() -> new RuntimeException("Error: El cliente no existe."));
+
+        // Validar que el DNI coincida con el del cliente
+        if (!nuevoClienteEncontrado.getDni().equals(nuevosDatos.getDni())) {
+            throw new IllegalArgumentException("Error: El DNI proporcionado no coincide con el del cliente registrado.");
+        }
 
         Apartamento nuevoApartamentoEncontrado = apartamentoRepository.findById(nuevosDatos.getId_apartamento())
                 .orElseThrow(() -> new RuntimeException("Error: El apartamento no existe."));
@@ -186,5 +177,40 @@ public class ReservaService {
                 }
             }
         }
+    }
+
+    /**
+     * Calcula el precio total de la reserva basado en el número de noches,
+     * precio por noche del apartamento, y descuentos disponibles.
+     * Si la reserva es de una sola noche, se añade un 50% de recargo.
+     *
+     * Los descuentos se aplican por prioridad (no se acumulan):
+     * 1. Cliente registrado: 10% descuento
+     * 2. Reserva de 7+ noches: 10% descuento
+     * 3. Sin descuento
+     */
+    private Double calcularPrecioReserva(Date f_entrada, Date f_salida, Double precioPorNoche, Boolean clienteRegistrado) {
+        long diferencia = f_salida.getTime() - f_entrada.getTime();
+        // milisegundos * segundos * minutos * horas
+        // con esto podemos calcular el número de días
+        long numeroNoches = diferencia / (1000 * 60 * 60 * 24);
+
+        Double precioTotal = numeroNoches * precioPorNoche;
+
+        // Si es una sola noche, aplicar 50% de recargo
+        if (numeroNoches == 1) {
+            precioTotal = precioTotal * 1.5;
+        }
+
+        // Aplicar descuentos por prioridad (NO se acumulan)
+        if (clienteRegistrado != null && clienteRegistrado) {
+            // Cliente registrado: 10% descuento
+            precioTotal = precioTotal * 0.9;
+        } else if (numeroNoches >= 7) {
+            // Reserva de 7+ noches: 10% descuento (solo si no es cliente registrado)
+            precioTotal = precioTotal * 0.9;
+        }
+
+        return precioTotal;
     }
 }

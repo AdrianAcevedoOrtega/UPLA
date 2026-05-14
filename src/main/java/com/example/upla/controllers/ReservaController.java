@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000") // Permitir cualquier origen para desarrollo
 @RequestMapping("api/reservas")
 @RequiredArgsConstructor
 

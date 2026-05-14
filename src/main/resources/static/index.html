@@ -19,22 +19,27 @@
                 <form id="reservaForm">
                     <div class="form-group">
                         <label for="id_cliente">ID Cliente:</label>
-                        <input type="number" id="id_cliente" placeholder="Ej: 1" required>
+                        <input type="number" id="id_cliente" name="id_cliente" placeholder="Ej: 1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dni">DNI/Pasaporte:</label>
+                        <input type="text" id="dni" name="dni" placeholder="Ej: 12345678A" required>
                     </div>
 
                     <div class="form-group">
                         <label for="id_apartamento">ID Apartamento:</label>
-                        <input type="number" id="id_apartamento" placeholder="Ej: 1" required>
+                        <input type="number" id="id_apartamento" name="id_apartamento" placeholder="Ej: 1" required>
                     </div>
 
                     <div class="form-group">
                         <label for="f_entrada">Fecha de Entrada:</label>
-                        <input type="date" id="f_entrada" required>
+                        <input type="date" id="f_entrada" name="f_entrada" required>
                     </div>
 
                     <div class="form-group">
                         <label for="f_salida">Fecha de Salida:</label>
-                        <input type="date" id="f_salida" required>
+                        <input type="date" id="f_salida" name="f_salida" required>
                     </div>
 
                     <button type="submit" class="btn btn-primary">🚀 Crear Reserva</button>
