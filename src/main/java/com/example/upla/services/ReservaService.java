@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.text.SimpleDateFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -20,17 +20,66 @@ public class ReservaService {
     private final ReservaRepository reservaRepository;
     private final ReservaMapper reservaMapper;
 
-    @Transactional
-    public ReservaResponseDTO crearReserva(ReservaRequestDTO dto) {
-        String apartmentId = "Apto ID: " + dto.getId_apartamento();
+    // Métodos
 
-        if (reservaRepository.existsOverlappingReserva(apartmentId, dto.getF_entrada(), dto.getF_salida())) {
-            throw new RuntimeException("El apartamento ya está ocupado en esas fechas.");
+    public ReservaResponseDTO crearReserva(ReservaRequestDTO reservaDTO) {
+
+        Cliente clienteEncontrado = clienteRepository.findById(reservaDTO.getId_cliente())
+                .orElseThrow(() -> new RuntimeException("Error: El cliente con ID " + reservaDTO.getId_cliente() + " no existe."));
+
+        // Validar que el DNI coincida con el del cliente
+        if (!clienteEncontrado.getDni().equals(reservaDTO.getDni())) {
+            throw new IllegalArgumentException("Error: El DNI proporcionado no coincide con el del cliente registrado.");
         }
 
-        Reserva reserva = reservaMapper.toEntity(dto);
-        reserva.setStatus(ReservaStatus.CONFIRMED);
-        return reservaMapper.toResponseDTO(reservaRepository.save(reserva));
+        Apartamento apartamentoEncontrado = apartamentoRepository.findById(reservaDTO.getId_apartamento())
+                .orElseThrow(() -> new RuntimeException("Error: El apartamento con ID " + reservaDTO.getId_apartamento() + " no existe."));
+
+        Date entrada = reservaDTO.getF_entrada();
+        Date salida = reservaDTO.getF_salida();
+
+        if (salida.before(entrada) || salida.equals(entrada)) {
+            throw new IllegalArgumentException("La fecha de salida debe ser posterior a la fecha de entrada.");
+        }
+
+        if (reservaRepository.existeSolapamiento(reservaDTO.getId_apartamento(), entrada, salida)) {
+            throw new IllegalArgumentException("Error: El apartamento ya está reservado para las fechas seleccionadas.");
+        }
+
+        Double precioReserva = calcularPrecioReserva(entrada, salida, apartamentoEncontrado.getPrecio(), clienteEncontrado.getRegistrado());
+
+        // Generar ID de reserva: "yyyy-MM-dd-idDepartamento" (usando fecha de entrada)
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String fechaEntradaFormato = sdf.format(entrada);
+        String idReservaBase = fechaEntradaFormato + "-" + String.format("%02d", reservaDTO.getId_apartamento());
+
+        // Verificar si el ID ya existe y agregar sufijo si es necesario
+        String idReserva = idReservaBase;
+        int contador = 1;
+        while (reservaRepository.existsById(idReserva)) {
+            idReserva = idReservaBase + "-" + contador;
+            contador++;
+        }
+
+        Reserva nuevaReserva = Reserva.builder()
+                .id_reserva(idReserva)
+                .f_entrada(entrada)
+                .f_salida(salida)
+                .cliente(clienteEncontrado)
+                .apartamento(apartamentoEncontrado)
+                .precio(precioReserva)
+                .build();
+
+        Reserva reservaGuardada = reservaRepository.save(nuevaReserva);
+
+        return ReservaResponseDTO.builder()
+                .id_reserva(reservaGuardada.getId_reserva())
+                .f_entrada(reservaGuardada.getF_entrada())
+                .f_salida(reservaGuardada.getF_salida())
+                .nombreCliente(reservaGuardada.getCliente().getNombre())
+                .direccionApartamento(reservaGuardada.getApartamento().getDireccion())
+                .precio(reservaGuardada.getPrecio())
+                .build();
     }
 
     @Transactional
@@ -40,8 +89,15 @@ public class ReservaService {
 
         String apartmentId = "Apto ID: " + dto.getId_apartamento();
 
-        boolean overlap = reservaRepository.existsOverlappingReservaExcludingSelf(
-                apartmentId, id, dto.getF_entrada(), dto.getF_salida());
+        return paginaDeReservas.map(reserva -> ReservaResponseDTO.builder()
+                .id_reserva(reserva.getId_reserva())
+                .f_entrada(reserva.getF_entrada())
+                .f_salida(reserva.getF_salida())
+                .nombreCliente(reserva.getCliente().getNombre())
+                .direccionApartamento(reserva.getApartamento().getDireccion())
+                .precio(reserva.getPrecio())
+                .build());
+    }
 
         if (overlap) {
             throw new RuntimeException("Conflicto de fechas: el apartamento ya está reservado.");
@@ -56,20 +112,40 @@ public class ReservaService {
         return reservaMapper.toResponseDTO(reservaRepository.save(reserva));
     }
 
-    @Transactional
-    public void cancelarReserva(String id) {
-        Reserva reserva = reservaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
-        reserva.setStatus(ReservaStatus.CANCELLED);
-        reservaRepository.save(reserva);
-    }
+        // Validar que el DNI coincida con el del cliente
+        if (!nuevoClienteEncontrado.getDni().equals(nuevosDatos.getDni())) {
+            throw new IllegalArgumentException("Error: El DNI proporcionado no coincide con el del cliente registrado.");
+        }
+
+        Apartamento nuevoApartamentoEncontrado = apartamentoRepository.findById(nuevosDatos.getId_apartamento())
+                .orElseThrow(() -> new RuntimeException("Error: El apartamento no existe."));
 
     @Transactional
     public void eliminarFisicamente(String id) {
         if (!reservaRepository.existsById(id)) {
             throw new RuntimeException("El ID no existe en la base de datos.");
         }
-        reservaRepository.deleteById(id);
+
+        reservaAntigua.setF_entrada(entrada);
+        reservaAntigua.setF_salida(salida);
+        reservaAntigua.setCliente(nuevoClienteEncontrado);
+        reservaAntigua.setApartamento(nuevoApartamentoEncontrado);
+
+        // Recalcular el precio de la reserva
+        Double precioReserva = calcularPrecioReserva(entrada, salida, nuevoApartamentoEncontrado.getPrecio(), nuevoClienteEncontrado.getRegistrado());
+        reservaAntigua.setPrecio(precioReserva);
+
+        Reserva reservaGuardada = reservaRepository.save(reservaAntigua);
+
+        return ReservaResponseDTO.builder()
+                .id_reserva(reservaGuardada.getId_reserva())
+                .f_entrada(reservaGuardada.getF_entrada())
+                .f_salida(reservaGuardada.getF_salida())
+                .nombreCliente(reservaGuardada.getCliente().getNombre())
+                .direccionApartamento(reservaGuardada.getApartamento().getDireccion())
+                .precio(reservaGuardada.getPrecio())
+                .build();
+
     }
 
     @Transactional(readOnly = true)
@@ -77,5 +153,40 @@ public class ReservaService {
         return reservaRepository.findAll().stream()
                 .map(reservaMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Calcula el precio total de la reserva basado en el número de noches,
+     * precio por noche del apartamento, y descuentos disponibles.
+     * Si la reserva es de una sola noche, se añade un 50% de recargo.
+     *
+     * Los descuentos se aplican por prioridad (no se acumulan):
+     * 1. Cliente registrado: 10% descuento
+     * 2. Reserva de 7+ noches: 10% descuento
+     * 3. Sin descuento
+     */
+    private Double calcularPrecioReserva(Date f_entrada, Date f_salida, Double precioPorNoche, Boolean clienteRegistrado) {
+        long diferencia = f_salida.getTime() - f_entrada.getTime();
+        // milisegundos * segundos * minutos * horas
+        // con esto podemos calcular el número de días
+        long numeroNoches = diferencia / (1000 * 60 * 60 * 24);
+
+        Double precioTotal = numeroNoches * precioPorNoche;
+
+        // Si es una sola noche, aplicar 50% de recargo
+        if (numeroNoches == 1) {
+            precioTotal = precioTotal * 1.5;
+        }
+
+        // Aplicar descuentos por prioridad (NO se acumulan)
+        if (clienteRegistrado != null && clienteRegistrado) {
+            // Cliente registrado: 10% descuento
+            precioTotal = precioTotal * 0.9;
+        } else if (numeroNoches >= 7) {
+            // Reserva de 7+ noches: 10% descuento (solo si no es cliente registrado)
+            precioTotal = precioTotal * 0.9;
+        }
+
+        return precioTotal;
     }
 }

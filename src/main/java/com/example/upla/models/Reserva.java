@@ -33,7 +33,12 @@ public class Reserva {
     @Enumerated(EnumType.STRING)
     private ReservaStatus status;
 
-    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private Double precio;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_ap")
+    private Apartamento apartamento;
 
     @PrePersist
     protected void onCreate() {

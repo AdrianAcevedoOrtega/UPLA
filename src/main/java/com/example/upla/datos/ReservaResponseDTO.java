@@ -18,4 +18,7 @@ public class ReservaResponseDTO {
     private LocalDateTime f_entrada;
     private LocalDateTime f_salida;
     private String direccionApartamento;
+    private Double precio;
+
+
 }
