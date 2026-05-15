@@ -2,21 +2,14 @@ package com.example.upla.services;
 
 import com.example.upla.datos.ReservaRequestDTO;
 import com.example.upla.datos.ReservaResponseDTO;
-import com.example.upla.models.Apartamento;
-import com.example.upla.models.Cliente;
 import com.example.upla.models.Reserva;
-import com.example.upla.repositories.ApartamentoRepository;
-import com.example.upla.repositories.ClienteRepository;
+import com.example.upla.models.enums.ReservaStatus;
+import com.example.upla.mappers.ReservaMapper;
 import com.example.upla.repositories.ReservaRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.text.SimpleDateFormat;
 
@@ -25,8 +18,7 @@ import java.text.SimpleDateFormat;
 public class ReservaService {
 
     private final ReservaRepository reservaRepository;
-    private final ClienteRepository clienteRepository;
-    private final ApartamentoRepository apartamentoRepository;
+    private final ReservaMapper reservaMapper;
 
     // Métodos
 
@@ -90,10 +82,12 @@ public class ReservaService {
                 .build();
     }
 
-    public Page<ReservaResponseDTO> obtenerTodasLasReservas(int page, int size){
-        Pageable configuracionPagina = PageRequest.of(page, size);
+    @Transactional
+    public ReservaResponseDTO actualizarReserva(String id, ReservaRequestDTO dto) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
 
-        Page<Reserva> paginaDeReservas = reservaRepository.findAll(configuracionPagina);
+        String apartmentId = "Apto ID: " + dto.getId_apartamento();
 
         return paginaDeReservas.map(reserva -> ReservaResponseDTO.builder()
                 .id_reserva(reserva.getId_reserva())
@@ -105,20 +99,18 @@ public class ReservaService {
                 .build());
     }
 
-    public void eliminarReserva(String id){
-        if (!reservaRepository.existsById(id)) {
-            throw new RuntimeException("Error: La reserva con ID " + id + " no existe.");
+        if (overlap) {
+            throw new RuntimeException("Conflicto de fechas: el apartamento ya está reservado.");
         }
-        reservaRepository.deleteById(id);
 
+        // Actualizamos los campos
+        reserva.setClienteNombre("DNI: " + dto.getDni());
+        reserva.setHabitacionTipo(apartmentId);
+        reserva.setFechaEntrada(dto.getF_entrada());
+        reserva.setFechaSalida(dto.getF_salida());
+
+        return reservaMapper.toResponseDTO(reservaRepository.save(reserva));
     }
-
-    public ReservaResponseDTO actualizarReserva(String id, ReservaRequestDTO nuevosDatos) {
-        Reserva reservaAntigua = reservaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Error: La reserva con ID " + id + " no existe."));
-
-        Cliente nuevoClienteEncontrado = clienteRepository.findById(nuevosDatos.getId_cliente())
-                .orElseThrow(() -> new RuntimeException("Error: El cliente no existe."));
 
         // Validar que el DNI coincida con el del cliente
         if (!nuevoClienteEncontrado.getDni().equals(nuevosDatos.getDni())) {
@@ -128,10 +120,10 @@ public class ReservaService {
         Apartamento nuevoApartamentoEncontrado = apartamentoRepository.findById(nuevosDatos.getId_apartamento())
                 .orElseThrow(() -> new RuntimeException("Error: El apartamento no existe."));
 
-        Date entrada = nuevosDatos.getF_entrada();
-        Date salida = nuevosDatos.getF_salida();
-        if (salida.before(entrada) || salida.equals(entrada)) {
-            throw new IllegalArgumentException("La fecha de salida debe ser posterior a la fecha de entrada.");
+    @Transactional
+    public void eliminarFisicamente(String id) {
+        if (!reservaRepository.existsById(id)) {
+            throw new RuntimeException("El ID no existe en la base de datos.");
         }
 
         reservaAntigua.setF_entrada(entrada);
@@ -156,27 +148,11 @@ public class ReservaService {
 
     }
 
-    @Scheduled (fixedRate = 60000)
-    public void eliminarReservasSolapadas() {
-        List<Reserva> todasReservas = new ArrayList<>(reservaRepository.findAll());
-
-        for (int i = 0; i < todasReservas.size(); i++){
-            Reserva reservaA = todasReservas.get(i);
-            for (int j = i + 1; j < todasReservas.size(); j++) {
-                Reserva reservaB = todasReservas.get(j);
-
-                if (reservaA.getApartamento().getId_ap().equals(reservaB.getApartamento().getId_ap())){
-                    if (reservaB.getF_entrada().before(reservaA.getF_salida()) &&
-                            reservaB.getF_salida().after(reservaA.getF_entrada())) {
-                        if (reservaA.getId_reserva().compareTo(reservaB.getId_reserva()) > 0) {
-                            reservaRepository.deleteById(reservaA.getId_reserva());
-                        } else {
-                            reservaRepository.deleteById(reservaB.getId_reserva());
-                        }
-                    }
-                }
-            }
-        }
+    @Transactional(readOnly = true)
+    public List<ReservaResponseDTO> listarTodas() {
+        return reservaRepository.findAll().stream()
+                .map(reservaMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
     /**
